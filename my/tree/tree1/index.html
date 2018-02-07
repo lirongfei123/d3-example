@@ -1,0 +1,47 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>tree</title>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+  </head>
+  <body>
+    <!-- 创建图表容器 -->
+    <div id="c1"></div>
+    <script>
+        var index = 0;
+        // 创建一个树布局
+      var tree = d3.layout.tree().size([800, 600]);
+      // 创建一个对角线生成器
+      var diagonal = d3.svg.diagonal()
+        // .projection(function(d) {
+        //     return [d.y, d.x]
+        // });
+    var svg = d3.select('#c1').append('svg')
+    .attr('width', '800')
+    .attr('height', '800')
+    .append('g')
+    .attr('transtion', function() {
+        return 'translate(100, 20)';
+    });
+      d3.json("data.json", function(err, data) {
+          if(err) return;
+          var nodes = tree.nodes(data).reverse();
+          var links = tree.links(nodes);
+          var node = svg.selectAll('g.node').data(nodes, function(d) {
+            return d.id || (d.id = ++index)
+          });
+          var nodeEnter = node.enter()
+            .append('g').attr('class', 'node')
+            .attr('transform', function(d) {
+              return 'translate(' + d.x + ',' + d.y + ')';
+          });
+          nodeEnter.append('circle')
+          .attr('r', 5)
+          .style('fill', 'red');
+      })
+
+    </script>
+  </body>
+</html>

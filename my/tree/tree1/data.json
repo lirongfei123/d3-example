@@ -1,0 +1,38 @@
+{
+    "name": "阿里云",
+    "children": [
+        {
+            "name":"飞天一部",
+            "children":[
+                {
+                    "name": "IDST"
+                },
+                {
+                    "name": "视频研究所"
+                },
+                {
+                    "name": "音频研究所"
+                }
+            ]
+        },
+        {
+            "name":"飞天八部",
+            "children":[
+                {
+                    "name": "ECS"
+                }
+            ]
+        },
+        {
+            "name":"飞天六部",
+            "children":[
+                {
+                    "name": "客服平台"
+                },
+                {
+                    "name": "智能平台"
+                }
+            ]
+        }
+    ]
+}

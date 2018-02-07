@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Marimekko Chart</title>
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+rect {
+  stroke: #000;
+}
+
+svg {
+  shape-rendering: crispEdges;
+}
+
+</style>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+var width = 900;
+var height = 500;
+var margin = 20;
+var svg = d3.select('body').append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .append('g')
+    .attr('transform', 'translate(' + 2 * margin + ',' + margin + ')');
+var xd = d3.format(',d');
+var yd = d3.format('%');
+var x = d3.scale.linear().range([
+    0, width - 3 * margin 
+]);
+var y = d3.scale.linear().range([
+    0, height - 2 * margin 
+]);
+var z = d3.scale.category10();
+d3.json('marimekko.json', function (data) {
+    console.log(data);
+    var result = d3.nest().key(function(d){
+        return d.market;
+    }).entries(data);
+    console.log(result);
+})
+</script>
