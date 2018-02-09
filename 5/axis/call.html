@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    .cells {
+        fill: #aaa;
+    }
+
+    .label {
+        text-anchor: start;
+        font: 24px sans-serif;
+    }
+</style>
+<svg width="960" height="990"></svg>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+    var svg = d3.select('svg');
+    var width = svg.attr('width');
+    var height = svg.attr('height');
+    var linear = d3.scale.linear()
+        .domain([0, 1])
+        .range([0, width]);
+    var axis = d3.svg.axis()
+        .scale(linear)
+        .orient('bottom');
+    svg.append('g')
+        .call(axis);
+</script>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    rect {
+        stroke: #fff;
+    }
+</style>
+
+<body>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script>
+        var width = 900;
+        var height = 500;
+        var svg = d3.select('body')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .append('g');
+        var x = d3.scale.linear()
+            .range([0, width]);
+        var y = d3.scale.linear()
+            .range([0, height]);
+        var partitionLayout = d3.layout.partition()
+            .children(function (d) {
+                return isNaN(d.value) ? d3.entries(d.value) : null;
+                                                                                                             })
+            .value(function (d) {
+                return d.value;
+            });
+        var colors = d3.scale.category20c();
+        d3.json('data.json', function (data) {
+            var rects = svg.selectAll('rect')
+                .data(partitionLayout(d3.entries(data)[0]))
+                .enter()
+                .append('rect')
+                .attr('x', function(d) {
+                    return x(d.x);
+                })
+                .attr('y', function(d) {
+                    return y(d.y);
+                })
+                .attr('width', function(d) {
+                    return x(d.dx);
+                })
+                .attr('height', function(d) {
+                    return y(d.dy);
+                })
+                .attr('fill', function (d) {
+                    return colors(d.key + d.value);
+                }).on('click', clicked);
+            function clicked(d) {
+                x.domain([d.x, d.x + d.dx]);
+                y.domain([d.y, 1])
+                    .range([0, height]);
+                rects
+                .transition()
+                .duration(750)
+                .attr('x', function (d) {
+                    return  x(d.x);
+                }).attr('y', function (d) {
+                    return  y(d.y);
+                }).attr('width', function (d) {
+                    return  x(d.x + d.dx) - x(d.x);
+                }).attr('height', function (d) {
+                    return  y(d.y + d.dy) - y(d.y);
+                });
+            }
+        });
+
+    </script>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    .cells {
+        fill: #aaa;
+    }
+
+    .label {
+        text-anchor: start;
+        font: 24px sans-serif;
+    }
+</style>
+<svg width="960" height="990"></svg>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+    var svg = d3.select('svg');
+    var width = svg.attr('width');
+    var height = svg.attr('height');
+    var line = d3.svg.line();
+    svg.append('path')
+        .attr('d', line([[10,20],[20,30],[50,70],[100,60]]));
+    var line2 = d3.svg.line()
+        .x(function (d) {
+            return d.year;
+        })
+        .y(function (d) {
+            return d.yield;
+        });
+    svg.append('path')
+        .attr('transform', 'translate(100,100)')
+        .attr('d', line2([
+            {year:10,yield:20},
+            {year:20,yield:30},
+            {year:50,yield:70},
+        ]));
+</script>

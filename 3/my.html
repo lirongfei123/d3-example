@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    .cells {
+        fill: #aaa;
+    }
+
+    .label {
+        text-anchor: start;
+        font: 24px sans-serif;
+    }
+</style>
+<svg width="960" height="990"></svg>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+    var svg = d3.select('svg');
+    var width = svg.attr('width');
+    var height = svg.attr('height');
+    var cellSpacing = 1;
+    var groupSpacing = 3;
+    var cellSize = Math.floor((width - 11 * groupSpacing) / 100) - cellSpacing;
+    var offset = Math.floor((width - 11 * groupSpacing - 90 * cellSpacing - 100 * cellSize) /2);
+    var cells = svg.append('g')
+        .attr('transform', 'translate(' + offset + ',' + (offset + 30) + ')');
+    var label = svg.append('text')
+        .attr('x', '0')
+        .attr('y', 0)
+        .attr('dy', '0.73em')
+        .attr('stroke', '#000')
+        .transition()
+        .duration(1000)
+        .tween('text', function () {
+            var i = d3.interpolateNumber(1, 10000);
+            return function (t) {
+                this.textContent = i(t);
+            }
+        });
+    function update(n1) {
+        var n0 = cells.size();
+        cells.data(d3.range(n1))
+            .enter()
+            .append('rect')
+            .attr('x', function (i) {
+                var x0 = Math.floor(i / 100) % 10, x1 = Math.floor(i % 10);
+                return groupSpacing * x0 + (cellSpacing + cellSize) * (x1 + x0 * 10);
+            });
+    }
+    update(1000);
+</script>

@@ -19,8 +19,9 @@ svg {
 <body>
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
+// selectAll-data-enter-append
 var width = 900;
-var height = 500;
+var height = 400;
 var margin = 20;
 var svg = d3.select('body').append('svg')
     .attr('width', width)
@@ -36,11 +37,81 @@ var y = d3.scale.linear().range([
     0, height - 2 * margin 
 ]);
 var z = d3.scale.category10();
+// 绘制坐标轴
+var xaxis = svg.selectAll('.x')
+    .data(x.ticks(10))
+    .enter()
+    .append('g')
+    .attr('class', 'x')
+    .attr('transform', function (d) {
+        return 'translate(' + x(d) + ',' + y(1) + ')';
+    });
+xaxis.append('line')
+    .attr('y2', 6)
+    .style('stroke', '#000');
+xaxis.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('y', 8)
+    .attr('dy', '0.75em')
+    .text(function (d) {return d});
+var yxais = svg.selectAll('.y')
+    .data(y.ticks(10))
+    .enter()
+    .append('g')
+    .attr('class', 'x')
+    .attr('transform', function (d) {
+        return 'translate(' + x(0) + ',' + y(1-d) + ')';
+    });
+yxais.append('line')
+    .attr('x2', -6)
+    .style('stroke', '#000');
+yxais.append('text')
+    .attr('x', -8)
+    .attr('text-anchor', 'end')
+    .attr('dy', '0.48em')
+    .text(function (d) {
+        return yd(d);
+    });
 d3.json('marimekko.json', function (data) {
-    console.log(data);
     var result = d3.nest().key(function(d){
         return d.market;
     }).entries(data);
-    console.log(result);
+    // 求总和，以及每一列的总和
+    var sum = result.reduce(function (x, p) {
+        p.offset = x;
+        return x + (p.sum = p.values.reduceRight(function (x0, p0) {
+            p0.parent = p;
+            p0.offset = x0;
+            return x0 + p0.value;
+        }, 0));
+    }, 0);
+    var resultElements = svg.selectAll('.result')
+        .data(result)
+        .enter()
+        .append('g')
+        .attr('class', 'result')
+        .attr('transform', function (d) {
+            return 'translate(' + x(d.offset/sum) + ',' +  '0)'
+        });
+    resultElements
+        .selectAll('.segment')
+        .data(function (d) {
+            return d.values;
+        })
+        .enter()
+        .append('a')
+        .append('rect')
+        .attr('y', function (d) {
+            return  yd(d.offset/d.parent.sum);
+        })
+        .attr('width', function (d) {
+            return x(d.parent.sum / sum)
+        })
+        .attr('height', function (d) {
+            return y(d.value / d.parent.sum)
+        })
+        .attr('fill', function (d) {
+            return z(d.segment);
+        });
 })
 </script>
