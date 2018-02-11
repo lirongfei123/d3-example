@@ -18,7 +18,6 @@
     var nodes = d3.range(100).map(function (i) {
       return { index: i };
     });
-    debugger
     var force = d3.layout.force()
       .nodes(nodes)
       .size([width, height])
@@ -54,8 +53,8 @@
       // Push different nodes in different directions for clustering.
       var k = 6 * e.alpha;
       nodes.forEach(function (o, i) {
-        o.y += i & 1 ? k : -k;
-        o.x += i & 2 ? k : -k;
+        o.y += k;
+        o.x += -k;
       });
 
       node.attr("cx", function (d) { return d.x; })
