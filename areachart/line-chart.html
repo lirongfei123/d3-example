@@ -24,15 +24,15 @@ var x = d3.scaleTime()
     .rangeRound([0, width]);
 var y = d3.scaleLinear()
     .rangeRound([height, 0]);
-// 定义面积生成器
-var area = d3.area()
+// 定义线生成器
+var line = d3.line()
     .x(function (d) {
         return x(d.date);
     })
-    .y1(function (d) {
+    .y(function (d) {
         return y(d.close);
     });
-// 请求数据
+// 请求数据ll
 d3.tsv('data.tsv', function (d) {
     d.date = parseTime(d.date);
     d.close = +d.close;
@@ -45,17 +45,18 @@ d3.tsv('data.tsv', function (d) {
     .attr('transform', `translate(0, ${height})`)
     .call(d3.axisBottom(x));
 
-    y.domain([0, d3.max(data, function (d) {
+    y.domain(d3.extent(data, function (d) {
         return d.close;
-    })]);
+    }));
     g.append('g')
     .call(d3.axisLeft(y));
 
-    area.y0(y(0));
     g.append('path')
         .datum(data)
-        .attr("fill", "steelblue")
-        .attr('d', area);
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        
+        .attr("d", line);
 })
 // 调用相应生成器来绘制界面
 </script>

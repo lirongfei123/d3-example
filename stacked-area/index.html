@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<svg width="960" height="500"></svg>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script>
+    /**
+    定义三个比例尺
+    定义一个堆叠数据生成器
+    定义一个面积生成器
+    请求数据
+    绑定堆叠数据
+    更具堆叠数据，调用面积生成器，生成边际
+    画出坐标轴
+    画出刻度
+     */
+    var svgElem = d3.select('svg');
+    var margin = {
+        left: 40,
+        top: 20,
+        bottom: 30,
+        right: 20
+    }
+    var width = +svgElem.attr('width') - margin.left - margin.right;
+    var height = +svgElem.attr('height') - margin.top - margin.bottom;
+    var g = svgElem.append('g')
+        .attr('transform', `translate(${margin.left}, ${margin.top})`);
+    // 时间格式化
+    var parseDate = d3.timeParse('%Y %b %d');
+    // 定义比例尺
+    var x = d3.scaleTime().rangeRound([0, width]);
+    var y = d3.scaleLinear().rangeRound([height, 0]);
+    var z = d3.scaleOrdinal(d3.schemeCategory10);
+    // 定义堆叠数据生成器
+    var stack = d3.stack();
+    // 定义面积生成器
+    var area = d3.area()
+        .x(function (d) {
+            return x(d.data.date);
+        })
+        .y0(function (d) {
+            return y(d[0]);
+        })
+        .y1(function (d) {
+            return y(d[1]);
+        });
+    d3.tsv('data.tsv', function (d, _, colums) {
+        d.date = parseDate(d.date);
+        colums = colums.slice(1);
+        for (var i = 0, len = colums.length, c; i < len; i++) {
+            d[c = colums[i]] = +d[c] / 100;
+        }
+        return d;
+    }, function (data) {
+        x.domain(d3.extent(data, function (d) {
+            return d.date;
+        }));
+        y.domain();
+        var keys = data.columns.slice(1);
+        z.domain(data.columns.slice(1));
+        stack.keys(keys)
+        // 先画图吧
+        var layers = g.selectAll('.layer')
+            .data(stack(data))
+            .enter()
+            .append('g')
+            .attr('class', 'layer');
+        layers.append('path')
+            .attr("class", "area")
+            .attr('fill', function (d) {
+                console.log(z(d.key));
+                return z(d.key)
+            })
+            .attr('d', area);
+        layers
+            .filter(function (d) {
+                return (d[d.length - 1][1] - d[d.length - 1][0]) > 0.01
+            })
+            .append('text')
+            .attr('x' , function (){
+                return width - 6;
+            })
+            .attr("dy", ".35em")
+            .attr('y', function (d) {
+                return y((d[d.length - 1][0] + d[d.length - 1][1])/2)
+            })
+            .attr('text-anchor', 'end')
+            .text(function (d) {
+                return d.key;
+            })
+        g.append('g')
+            .attr('transform', `translate(0, ${height})`)
+            .call(d3.axisBottom(x))
+        g.append('g')
+            .call(d3.axisLeft(y).ticks(10, '%'));
+    });
+</script>

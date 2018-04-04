@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    .axis--x path {
+        display: none;
+    }
+
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 1.5px;
+    }
+</style>
+<svg width="960" height="500"></svg>
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script>
+    /**
+        计算width， height
+        定义三个比例尺
+        定义图形生成函数
+        请求函数
+        聚合数据
+        画坐标轴
+        画图像
+    */
+    var svgElem = d3.select('svg');
+    var margin = {
+        left: 100,
+        top: 20,
+        right: 20,
+        bottom: 30
+    };
+    var width = +svgElem.attr('width') - margin.left - margin.right;
+    var height = +svgElem.attr('height') - margin.top - margin.bottom;
+    var g = svgElem.append('g')
+        .attr('transform', `translate(${margin.left}, ${margin.top})`);
+    var parseDate = d3.timeParse("%Y%m%d");
+    var x = d3.scaleTime().rangeRound([0, width]);
+    var y = d3.scaleLinear().rangeRound([height, 0]);
+    var z = d3.scaleOrdinal(d3.schemeCategory10);
+    var line = d3.line()
+        .x(function (d) {
+            return x(d.date);
+        })
+        .y(function (d) {
+            return y(d.value);
+        });
+    d3.tsv('data.tsv', function (d, index, colums) {
+        d.date = parseDate(d.date);
+        for (var i = 0, len = colums, c; i < len; i ++ ){
+            d[c=colums[i]] = +d[c];
+        }
+        return d;
+    }, function (data) {
+        var cities = [];
+        data.columns.slice(1).forEach(function (id) {
+            cities.push({
+                id: id,
+                values: data.map(function (d) {
+                    console.log(d[id]);
+                    return {
+                        date: d.date,
+                        value: d[id]
+                    }
+                })
+            })
+        });
+        x.domain(d3.extent(data, function(d){
+            return d.date;
+        }));
+        y.domain([
+            d3.min(cities, function (d) {
+                return d3.min(d.values, function (d1) {
+                    return d1.value;
+                })
+            }),
+            d3.max(cities, function (d) {
+                return d3.max(d.values, function (d1) {
+                    return d1.value;
+                });
+            })
+        ]);
+        z.domain(cities.map(function (d) {
+            return d.id;
+        }));
+
+        // 开始画
+        g.append('g')
+            .attr('transform', `translate(0, ${height})`)
+            .call(d3.axisBottom(x));
+        g.append('g')
+            .call(d3.axisLeft(y));
+        var citiesElem = g.selectAll('.line')
+            .data(cities)
+            .enter()
+            .append('g')
+            .attr('class', 'line');
+        citiesElem.append('path')
+            .attr('stroke', function (d) {
+                return z(d.id)
+            })
+            .attr('d', function (d) {
+                return line(d.values);
+            })
+    })
+</script>
