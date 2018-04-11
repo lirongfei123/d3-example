@@ -31,7 +31,44 @@ var margin = {
     bottom: 30,
     right: 20
 };
+
 var width = +svgElem.attr('width') - margin.left - margin.right;
 var height = +svgElem.attr('height') - margin.bottom - margin.top;
+var g = svgElem.append('g')
+  .attr('transform', `translate(${margin.left}, ${margin.top})`);
 var x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
+var y = d3.scaleLinear().rangeRound([height, 0]);
+d3.tsv('data.tsv', function (d) {
+  d.frequency = +d.frequency;
+  return d;
+}, function (data) {
+  x.domain(data.map(function(d) { return d.letter; }));
+  y.domain([0, d3.max(data, function (d) {
+    return d.frequency;
+  })]);
+  g.append('g')
+  .attr('transform', `translate(0, ${height})`)
+  .call(d3.axisBottom(x))
+  g.append('g')
+  .call(d3.axisLeft(y).ticks(10, '%'));
+
+  g.selectAll('.bar')
+    .data(data)
+    .enter()
+    .append('rect')
+    .attr("class", "bar")
+    .attr('x', function (d) {
+      return x(d.letter);
+    })
+    .attr('y', function (d) {
+      return y(d.frequency);
+    })
+    .attr('width', function (d) {
+      return x.bandwidth();
+    })
+    .attr('height', function (d){
+        return height - y(d.frequency);
+    });
+  
+});
 </script>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<style>
+
+.axis .domain {
+  display: none;
+}
+
+</style>
+<svg width="960" height="500"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+var svgElem = d3.select('svg');
+var margin = {
+    left: 30,
+    top: 20,
+    right: 20,
+    bottom: 30
+}
+var width = +svgElem.attr('width') - margin.left - margin.right;
+var height = +svgElem.attr('height') - margin.top - margin.bottom;
+var g = svgElem.append('g')
+    .attr('transform', `translate(${width}, ${height})`);
+var x = d3.scaleBand().rangeRound([0, width]).padding([0, 0.1]);
+var y = d3.scaleLinear().rangeRound([height, 0]);
+var colorCreate = d3.scaleOrdinal(d3.schemeCategory20);
+d3.csv('data.csv', function (d, _, colums) {
+    colums = colums.slice(1);
+    for (var i = 0, total = 0, len = colums.length, c; i < len; i++) {
+        total += d[c = colums[i]] = +d[colums[i]];
+    }
+    return d;
+}, function (data) {
+    var keys = data.columns.slice(1);
+    x.domain(data.map(function(d) {
+        return d.State;
+    }));
+    y.domain([0, d3.max(data, function (d) {
+        return d.total;
+    })]).nice();
+    colorCreate.domain(keys);
+    var groups = g.selectAll('.group')
+        .data(d3.stack().keys(keys)(data))
+        .enter()
+        .append('g')
+        .attr('class', 'group')
+        .selectAll('.rect')
+        .data(function (d) {
+            return d;
+        })
+        .enter()
+        .append('rect')
+        attr('x', function (d) {
+            return x(d.total)
+        })
+        .attr('hei', function(d) {
+            return y(d[0]) - y(d[1]);
+        })
+        .attr('width', function (d) {
+            return x.bandwidth();
+        })
+        .attr('y', function (d) {
+            return y(d[0]);
+        });
+});
+</script>
