@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<link type="text/css" rel="stylesheet" href="style.css" />
+<script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+
+<body>
+    <button onclick="addNode()"></button>
+    <!-- load the d3.js library -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+        $(document).on('keyup', function () {
+            if (allNodes) {
+                for (var i = 0, len = allNodes.length; i < len; i++) {
+                    if (allNodes[i].depth == depth) {
+                        if (allNodes[i].data.name == 'Coding') {
+                            var searchNode = d3.select('#nodeId' + allNodes[i].id)
+                            var translate = searchNode.attr("transform");
+                            var reg = /translate\(([^,]+),([^\)]+)\)/;
+                            var result = reg.exec(translate);
+                            container.attr("transform", `translate(${margin.left - result[1] + margin.left},${-result[2] + height/2})`);
+                            click(allNodes[i]);
+                        }
+                    }
+                }
+            }
+        });
+        
+        function addNode() {
+            if (currentSelect) {
+                var newNode = {
+                    "name": "Tableau Desktop",
+                    "description": "Powerful tool for data analytics and visualisation",
+                    "url": "http://www.tableausoftware.com/products/desktop"
+                };
+                var node = d3.hierarchy(newNode, function (d) { return d.children; });
+                if (!currentSelect.children) {
+                    currentSelect.children = [];
+                }
+                node.depth = currentSelect.depth + 1; 
+                node.height = currentSelect.height - 1;
+                node.parent = currentSelect; 
+                node.id = Date.now();
+                currentSelect.children.push(node);   
+                updateFn(currentSelect);
+                currentSelectNode.select('text')
+                    .attr("x", function (d) {
+                        return d.children || d._children ? -13 : 13;
+                    })
+                    .attr("text-anchor", function (d) {
+                        return d.children || d._children ? "end" : "start";
+                    });     
+            }
+        }
+        var container = null, allNodes=null, depth = 1, updateFn, startX, startY, startTranslateX, startTranslateY, drag, currentSelect, currentSelectCircleNode = null;
+        var margin = { top: 20, right: 90, bottom: 30, left: 90 },
+                width = document.documentElement.clientWidth - margin.left - margin.right,
+                height = document.documentElement.clientHeight - margin.top - margin.bottom;
+        $(document).on('contextmenu', function (e) {
+            e.preventDefault();
+        });
+        $(document).on('mousedown', function (e) {
+            if (e.which === 3 && container) {
+                e.preventDefault();
+                var translate = container.attr("transform");
+                var reg = /translate\(([^,]+),([^\)]+)\)/
+                var result = reg.exec(translate);
+                startTranslateX = result[1];
+                startTranslateY = result[2];
+                startX = e.offsetX;
+                startY = e.offsetY;
+                drag = true;
+            }
+        });
+        $(document).on('mouseup', function (e) {
+            if (e.which === 3 && container) {
+                drag = false;
+            }
+        });
+        $(document).on('mousemove', function (e) {
+            if (container && startX && startY && drag) {
+                container.attr("transform", `translate(${+startTranslateX + (e.offsetX - startX)},${+startTranslateY + (e.offsetY - startY)})`);
+            }
+        });
+        d3.json("data.json", function (treeData) {
+            
+            var svg = d3.select("body").append("svg")
+                .attr("width", width + margin.right + margin.left)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + (margin.top + height / 2) + ")");
+            container = svg;
+            var i = 0,
+                duration = 750,
+                root;
+
+            // 定义tree布局 var treemap = d3.tree().size([height, width])
+            // tree 布局是用来处理每一个节点的
+            var treemap = d3.tree().nodeSize([30, 50]);
+            // 定义根节点， 定义根节点的x, y位置
+            root = d3.hierarchy(treeData, function (d) { return d.children; });
+            root.x0 = 800 / 2;
+            root.y0 = 0;
+            update(root);
+            function collapse(d) {
+                if (d.children) {
+                    d._children = d.children
+                    d._children.forEach(collapse)
+                    d.children = null
+                }
+            }
+
+            function update(source) {
+                var treeData = treemap(root);
+                var nodes = treeData.descendants(),
+                    links = nodes.slice(1);
+                if (!allNodes) allNodes = nodes;
+                nodes.forEach(function (d) { d.y = d.depth * 180 });
+                var node = svg.selectAll('g.node')
+                    .data(nodes, function (d) { return d.id || (d.id = ++i); });
+                var nodeEnter = node.enter().append('g')
+                    .attr('class', 'node')
+                    .attr('id', function (d) {
+                        return "nodeId" + d.id
+                    })
+                    
+                    .attr("transform", function (d) {
+                        return "translate(" + source.y0 + "," + source.x0 + ")";
+                    })
+                .on('click', click);
+                nodeEnter.append('circle')
+                    .attr('class', 'node')
+                    .attr("r", 6)
+                    .style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+                // Add labels for the nodes
+                nodeEnter.append('text')
+                    .attr("dy", ".35em")
+                    .attr("x", function (d) {
+                        return d.children || d._children ? -13 : 13;
+                    })
+                    .attr("text-anchor", function (d) {
+                        return d.children || d._children ? "end" : "start";
+                    })
+                    .text(function (d) { return d.data.name; });
+
+                // UPDATE
+                var nodeUpdate = nodeEnter.merge(node);
+
+                // Transition to the proper position for the node
+                nodeUpdate.transition()
+                    .duration(duration)
+                    .attr("transform", function (d) {
+                        return "translate(" + d.y + "," + d.x + ")";
+                    });
+
+                // Update the node attributes and style
+                nodeUpdate.select('circle.node')
+                    .attr("r", 6)
+                    .style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; })
+                    .attr('cursor', 'pointer');
+
+                // Remove any exiting nodes
+                var nodeExit = node.exit().transition()
+                    .duration(duration)
+                    .attr("transform", function (d) {
+                        return "translate(" + source.y + "," + source.x + ")";
+                    })
+                    .remove();
+
+                // On exit reduce the node circles size to 0
+                nodeExit.select('circle')
+                    .attr('r', 1e-6);
+
+                // On exit reduce the opacity of text labels
+                nodeExit.select('text')
+                    .style('fill-opacity', 1e-6);
+
+                // ****************** links section ***************************
+
+                // Update the links...
+                var link = svg.selectAll('path.link')
+                    .data(links, function (d) { return d.id; });
+
+                // Enter any new links at the parent's previous position.
+                var linkEnter = link.enter().insert('path', "g")
+                    .attr("class", "link")
+                    .attr('d', function (d) {
+                        var o = { x: source.x0, y: source.y0 }
+                        return diagonal(o, o)
+                    });
+
+                // UPDATE
+                var linkUpdate = linkEnter.merge(link);
+
+                // Transition back to the parent element position
+                linkUpdate.transition()
+                    .duration(duration)
+                    .attr('d', function (d) { return diagonal(d, d.parent) });
+
+                // Remove any exiting links
+                var linkExit = link.exit().transition()
+                    .duration(duration)
+                    .attr('d', function (d) {
+                        var o = { x: source.x, y: source.y }
+                        return diagonal(o, o)
+                    })
+                    .remove();
+
+                // Store the old positions for transition.
+                nodes.forEach(function (d) {
+                    d.x0 = d.x;
+                    d.y0 = d.y;
+                });
+
+                // Creates a curved (diagonal) path from parent to the child nodes
+                function diagonal(s, d) {
+
+                    path = `M ${s.y} ${s.x}
+                            C ${(s.y + d.y) / 2} ${s.x},
+                            ${(s.y + d.y) / 2} ${d.x},
+                            ${d.y} ${d.x}`
+
+                    return path
+                }
+
+                
+                updateFn = update;
+            }
+        });
+        // Toggle children on click.
+        function click(d, index, nodes) {
+            currentSelect = d;
+            currentSelectNode = d3.select('#nodeId' + d.id)
+            if (currentSelectCircleNode) {
+                currentSelectCircleNode.style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; });
+            }
+            currentSelectCircleNode = currentSelectNode.select('circle');
+            currentSelectCircleNode.style('fill', 'red')
+        }
+    </script>
+</body>
