@@ -8,20 +8,32 @@
     <!-- load the d3.js library -->
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script>
-        $(document).on('keyup', function () {
+        $(document).on('keyup', function (e) {
             if (allNodes) {
-                for (var i = 0, len = allNodes.length; i < len; i++) {
-                    if (allNodes[i].depth == depth) {
-                        if (allNodes[i].data.name == 'Coding') {
-                            var searchNode = d3.select('#nodeId' + allNodes[i].id)
-                            var translate = searchNode.attr("transform");
-                            var reg = /translate\(([^,]+),([^\)]+)\)/;
-                            var result = reg.exec(translate);
-                            container.attr("transform", `translate(${margin.left - result[1] + margin.left},${-result[2] + height/2})`);
-                            click(allNodes[i]);
+                console.log(e.keyCode);
+                if (e.keyCode === 37) {
+
+                } else if (e.keyCode === 39) {
+
+                } else if (e.keyCode === 40) {
+
+                } else if (e.keyCode === 38) {
+
+                } else {
+                    for (var i = 0, len = allNodes.length; i < len; i++) {
+                        if (allNodes[i].depth == depth) {
+                            if (allNodes[i].data.name == 'Coding') {
+                                var searchNode = d3.select('#nodeId' + allNodes[i].id)
+                                var translate = searchNode.attr("transform");
+                                var reg = /translate\(([^,]+),([^\)]+)\)/;
+                                var result = reg.exec(translate);
+                                container.attr("transform", `translate(${margin.left - result[1] + margin.left},${-result[2] + height/2})`);
+                                click(allNodes[i]);
+                            }
                         }
                     }
                 }
+                
             }
         });
         
