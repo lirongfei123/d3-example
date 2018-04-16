@@ -4,7 +4,9 @@
 <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
 
 <body>
-    <button onclick="addNode()"></button>
+    <button onclick="addNode()">增加</button>
+    <button onclick="delNode()">删除</button>
+    <button onclick="modifyNode()">修改</button>
     <!-- load the d3.js library -->
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <script>
@@ -29,7 +31,7 @@
                     } else {
                         for (var i = 0, len = allNodes.length; i < len; i++) {
                             if (allNodes[i].depth == depth) {
-                                click(allNodes[i]);
+                                click(allNodes[i], 'h');
                             }
                         }
                     }
@@ -37,40 +39,41 @@
                 } else if (e.keyCode === 39) {// 向右
                     depth = depth + 1;
                     if (currentSelect) {
-                        console.log(currentSelect.children[0]);
-                        click(currentSelect.children[0]);
+                        if (currentSelect.children) {
+                            click(currentSelect.children[0]);
+                        }
                     } else {
                         for (var i = 0, len = allNodes.length; i < len; i++) {
                             if (allNodes[i].depth == depth) {
-                                click(allNodes[i]);
+                                click(allNodes[i], 'h');
                             }
                         }
                     }
                     
                 } else if (e.keyCode === 40) { // 向下
+                    var currentParent = [];
                     for (var i = 0, len = allNodes.length; i < len; i++) {
-                        if (allNodes[i].id === currentSelect.id) {
-                            var currentParent = allNodes[i + 1].parent.children;
-                            break;
+                        if (allNodes[i].depth == depth) {
+                            currentParent.push(allNodes[i]);
                         }
                     }
                     for (var i = 0, len = currentParent.length; i < len; i++) {
                         if (currentParent[i].id === currentSelect.id) {
-                            click(currentParent[i + 1]);
+                            click(currentParent[i + 1], 'v');
                             break;
                         }
                     }
                 } else if (e.keyCode === 38) { // 向上
+                    var currentParent = [];
                     for (var i = 0, len = allNodes.length; i < len; i++) {
-                        if (allNodes[i].id === currentSelect.id) {
-                            var currentParent = allNodes[i + 1].parent.children;
-                            break;
+                        if (allNodes[i].depth == depth) {
+                            currentParent.push(allNodes[i]);
                         }
                     }
+                    console.log(currentParent);
                     for (var i = 0, len = currentParent.length; i < len; i++) {
                         if (currentParent[i].id === currentSelect.id) {
-                            console.log(currentParent, currentSelect.id);
-                            click(currentParent[i - 1]);
+                            click(currentParent[i - 1], 'v');
                             break;
                         }
                     }
@@ -83,7 +86,7 @@
                                 var reg = /translate\(([^,]+),([^\)]+)\)/;
                                 var result = reg.exec(translate);
                                 container.attr("transform", `translate(${margin.left - result[1] + margin.left},${-result[2] + height/2})`);
-                                click(allNodes[i]);
+                                click(allNodes[i], 'word');
                             }
                         }
                     }
@@ -91,7 +94,22 @@
                 
             }
         });
-        
+        function delNode() {
+            if (currentSelect) {
+                currentSelect.parent.children = currentSelect.parent.children.filter(function (node) {
+                    return node.id != currentSelect.id;
+                });
+                updateFn(currentSelect);
+                depth = currentSelect.parent.depth;   
+            }
+        }
+        function modifyNode() {
+            if (currentSelect) {
+                currentSelect.data.name = '--------';
+                updateFn(currentSelect);
+                depth = currentSelect.depth;   
+            }
+        }
         function addNode() {
             if (currentSelect) {
                 var newNode = {
@@ -115,10 +133,12 @@
                     })
                     .attr("text-anchor", function (d) {
                         return d.children || d._children ? "end" : "start";
-                    });     
+                    });
+                depth = currentSelect.depth;   
             }
         }
         var container = null, allNodes=null, depth = 1, updateFn, startX, startY, startTranslateX, startTranslateY, drag, currentSelect, currentSelectCircleNode = null;
+        var nodeSpace = 180;
         var margin = { top: 20, right: 90, bottom: 30, left: 90 },
                 width = document.documentElement.clientWidth - margin.left - margin.right,
                 height = document.documentElement.clientHeight - margin.top - margin.bottom;
@@ -180,8 +200,7 @@
                 var treeData = treemap(root);
                 var nodes = treeData.descendants(),
                     links = nodes.slice(1);
-                if (!allNodes) allNodes = nodes;
-                nodes.forEach(function (d) { d.y = d.depth * 180 });
+                nodes.forEach(function (d) { d.y = d.depth * nodeSpace });
                 var node = svg.selectAll('g.node')
                     .data(nodes, function (d) { return d.id || (d.id = ++i); });
                 var nodeEnter = node.enter().append('g')
@@ -212,7 +231,7 @@
 
                 // UPDATE
                 var nodeUpdate = nodeEnter.merge(node);
-
+                allNodes = nodeUpdate.data();
                 // Transition to the proper position for the node
                 nodeUpdate.transition()
                     .duration(duration)
@@ -225,7 +244,8 @@
                     .attr("r", 6)
                     .style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; })
                     .attr('cursor', 'pointer');
-
+                // 更新文字
+                nodeUpdate.select('text').text(function (d) { return d.data.name; });
                 // Remove any exiting nodes
                 var nodeExit = node.exit().transition()
                     .duration(duration)
@@ -289,20 +309,35 @@
 
                     return path
                 }
-
-                
                 updateFn = update;
             }
         });
         // Toggle children on click.
-        function click(d, index, nodes) {
+        function click(d, fouceType) {
+            if (!d) return;
             currentSelect = d;
+            console.log(currentSelect);
             currentSelectNode = d3.select('#nodeId' + d.id)
             if (currentSelectCircleNode) {
                 currentSelectCircleNode.style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; });
             }
             currentSelectCircleNode = currentSelectNode.select('circle');
-            currentSelectCircleNode.style('fill', 'red')
+            currentSelectCircleNode.style('fill', 'red');
+            depth = currentSelect.depth;
+            // 聚焦的原则，向前，向后的时候聚焦，向上向下的时候，只聚焦其父元素
+            // 当聚焦元素前面有较多父节点的话，就聚焦到中心，这个最后一步判断下就好了
+            // 聚焦
+            // 获取聚焦元素
+            var searchNode = currentSelectNode;
+            if (fouceType === 'v') {
+                searchNode = d3.select('#nodeId' + currentSelect.parent.id);
+            }
+            var translate = searchNode.attr("transform");
+            var reg = /translate\(([^,]+),([^\)]+)\)/;
+            var result = reg.exec(translate);
+            var left = Math.min(width/2, currentSelect.depth * nodeSpace);
+            left = left + margin.left - result[1];
+            container.attr("transform", `translate(${left},${-result[2] + height/2})`);
         }
     </script>
 </body>
