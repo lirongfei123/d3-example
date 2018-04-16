@@ -24,29 +24,54 @@
                 // }
                 if (e.keyCode === 37) { // 向左
                     depth = depth - 1;
-                    for (var i = 0, len = allNodes.length; i < len; i++) {
-                        if (allNodes[i].depth == depth) {
-                            click(allNodes[i]);
+                    if (currentSelect) {
+                        click(currentSelect.parent);
+                    } else {
+                        for (var i = 0, len = allNodes.length; i < len; i++) {
+                            if (allNodes[i].depth == depth) {
+                                click(allNodes[i]);
+                            }
                         }
                     }
+                    
                 } else if (e.keyCode === 39) {// 向右
                     depth = depth + 1;
-                    for (var i = 0, len = allNodes.length; i < len; i++) {
-                        console.log(allNodes[i].depth , depth);
-                        if (allNodes[i].depth == depth) {
-                            click(allNodes[i]);
+                    if (currentSelect) {
+                        console.log(currentSelect.children[0]);
+                        click(currentSelect.children[0]);
+                    } else {
+                        for (var i = 0, len = allNodes.length; i < len; i++) {
+                            if (allNodes[i].depth == depth) {
+                                click(allNodes[i]);
+                            }
                         }
                     }
+                    
                 } else if (e.keyCode === 40) { // 向下
                     for (var i = 0, len = allNodes.length; i < len; i++) {
-                        if (allNodes[i].depth == depth && allNodes[i].id === currentSelect.id) {
-                            click(allNodes[i + 1]);
+                        if (allNodes[i].id === currentSelect.id) {
+                            var currentParent = allNodes[i + 1].parent.children;
+                            break;
+                        }
+                    }
+                    for (var i = 0, len = currentParent.length; i < len; i++) {
+                        if (currentParent[i].id === currentSelect.id) {
+                            click(currentParent[i + 1]);
+                            break;
                         }
                     }
                 } else if (e.keyCode === 38) { // 向上
                     for (var i = 0, len = allNodes.length; i < len; i++) {
-                        if (allNodes[i].depth == depth && allNodes[i].id === currentSelect.id) {
-                            click(allNodes[i - 1]);
+                        if (allNodes[i].id === currentSelect.id) {
+                            var currentParent = allNodes[i + 1].parent.children;
+                            break;
+                        }
+                    }
+                    for (var i = 0, len = currentParent.length; i < len; i++) {
+                        if (currentParent[i].id === currentSelect.id) {
+                            console.log(currentParent, currentSelect.id);
+                            click(currentParent[i - 1]);
+                            break;
                         }
                     }
                 } else {
